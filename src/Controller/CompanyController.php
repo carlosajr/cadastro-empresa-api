@@ -60,14 +60,12 @@ class CompanyController extends AbstractController
     }
 
     /**
-     * @Route("/{companyId}", name="show", methods={"GET"})
-     * @param $companyId
+     * @Route("/{company}", name="show", methods={"GET"})
+     * @param Company $company
      * @return JsonResponse
      */
-    public function show($companyId)
+    public function show(Company $company)
     {
-        $company = $this->companyRepository->findByCompany($companyId);
-
         return $this->json([
             'data' => $company
         ],200,[],[
@@ -102,7 +100,7 @@ class CompanyController extends AbstractController
     }
 
     /**
-     * @Route("/{companyId}", name="update", methods={"PUT", "PATCH"})
+     * @Route("/{company}", name="update", methods={"PUT", "PATCH"})
      * @param Company $company
      * @param Request $request
      * @return JsonResponse
@@ -128,7 +126,7 @@ class CompanyController extends AbstractController
     }
 
     /**
-     * @Route("/{companyId}", name="delete", methods={"DEL", "DELETE"})
+     * @Route("/{company}", name="delete", methods={"DEL", "DELETE"})
      * @param Company $company
      * @return JsonResponse
      * @throws \Doctrine\ORM\ORMException
