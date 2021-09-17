@@ -7,44 +7,56 @@ use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
- * @method Company|null find($id, $lockMode = null, $lockVersion = null)
- * @method Company|null findOneBy(array $criteria, array $orderBy = null)
- * @method Company[]    findAll()
- * @method Company[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
+ * Class CompanyRepository
+ * @package App\Repository
  */
 class CompanyRepository extends ServiceEntityRepository
 {
+    /**
+     * CompanyRepository constructor.
+     * @param ManagerRegistry $registry
+     */
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, Company::class);
     }
 
-    // /**
-    //  * @return Company[] Returns an array of Company objects
-    //  */
-    /*
-    public function findByExampleField($value)
+    /**
+     * @return array
+     */
+    public function findAllCompanys(): array
     {
-        return $this->createQueryBuilder('c')
-            ->andWhere('c.exampleField = :val')
-            ->setParameter('val', $value)
-            ->orderBy('c.id', 'ASC')
-            ->setMaxResults(10)
-            ->getQuery()
-            ->getResult()
-        ;
+        return $this->findAll();
     }
-    */
 
-    /*
-    public function findOneBySomeField($value): ?Company
+    /**
+     * @param int $company
+     * @return Company
+     */
+    public function findByCompany(int $company): Company
     {
-        return $this->createQueryBuilder('c')
-            ->andWhere('c.exampleField = :val')
-            ->setParameter('val', $value)
-            ->getQuery()
-            ->getOneOrNullResult()
-        ;
+        return $this->find($company);
     }
-    */
+
+    /**
+     * @param Company $company
+     * @throws \Doctrine\ORM\ORMException
+     * @throws \Doctrine\ORM\OptimisticLockException
+     */
+    public function save(Company $company): void
+    {
+        $this->getEntityManager()->persist($company);
+        $this->getEntityManager()->flush();
+    }
+
+    /**
+     * @param Company $company
+     * @throws \Doctrine\ORM\ORMException
+     * @throws \Doctrine\ORM\OptimisticLockException
+     */
+    public function remove(Company $company): void
+    {
+        $this->getEntityManager()->remove($company);
+        $this->getEntityManager()->flush();
+    }
 }

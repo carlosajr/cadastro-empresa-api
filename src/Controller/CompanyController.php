@@ -2,25 +2,55 @@
 
 namespace App\Controller;
 
+use App\Builders\CompanyBuilder;
+use App\Repository\CompanyRepository;
+use App\ValueObjects\CompanyValueObject;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
 use App\Entity\Company;
+use Symfony\Component\Serializer\Serializer;
 
 /**
  * @Route("/companys", name="company_")
  */
 class CompanyController extends AbstractController
 {
-   
+    /**
+     * @var CompanyRepository
+     */
+    private CompanyRepository $companyRepository;
+
+    /**
+     * @var CompanyBuilder
+     */
+    private CompanyBuilder $companyBuilder;
+
+    /**
+     * @var Serializer
+     */
+    private Serializer $serializer;
+
+    public function __construct(
+        CompanyRepository $companyRepository,
+        CompanyBuilder $companyBuilder,
+        Serializer $serializer
+    ) {
+        $this->companyRepository = $companyRepository;
+        $this->companyBuilder = $companyBuilder;
+        $this->serializer = $serializer;
+    }
+
     /**
      * @Route("/", name="index", methods={"GET"})
+     * @return Response
      */
     public function index(): Response
     {
-        $companys = $this->getDoctrine()->getRepository(Company::class)->findAll();
+        $companys = $this->companyRepository->findAllCompanys();
 
         return $this->json([
             'data' => $companys
@@ -31,10 +61,12 @@ class CompanyController extends AbstractController
 
     /**
      * @Route("/{companyId}", name="show", methods={"GET"})
+     * @param $companyId
+     * @return JsonResponse
      */
     public function show($companyId)
     {
-        $company = $this->getDoctrine()->getRepository(Company::class)->find($companyId);
+        $company = $this->companyRepository->findByCompany($companyId);
 
         return $this->json([
             'data' => $company
@@ -45,32 +77,22 @@ class CompanyController extends AbstractController
 
     /**
      * @Route("/", name="create", methods={"POST"})
+     * @param Request $request
+     * @return JsonResponse
+     * @throws \Doctrine\ORM\ORMException
+     * @throws \Doctrine\ORM\OptimisticLockException
      */
     public function create(Request $request)
     {
-        $data = $request->toArray();
+        $companyVo = $this->serializer->deserialize(
+            $request->getContent(),
+            CompanyValueObject::class,
+            'json'
+        );
 
-        $company = New Company();
-        $company->setName($data['name']);
-        $company->setFantasy($data['fantasy']);
-        $company->setCnpj($data['cnpj']);
-        $company->setPort($data['port']);
-        $company->setNature($data['nature']);
-        $company->setPhone($data['phone']);
-        $company->setMail($data['mail']);
-        $company->setCep($data['cep']);
-        $company->setState($data['state']);
-        $company->setCity($data['city']);
-        $company->setDistrict($data['district']);
-        $company->setStreet($data['street']);
-        $company->setNumber($data['number']);
-        $company->setCreatedAt(new \DateTime('now', new \DateTimeZone('America/Sao_Paulo')));
-        $company->setUpdatedAt(new \DateTime('now', new \DateTimeZone('America/Sao_Paulo')));
+        $company = $this->companyBuilder->build($companyVo);
 
-        $manager = $this->getDoctrine()->getManager();
-
-        $manager->persist($company);
-        $manager->flush();
+        $this->companyRepository->save($company);
 
         return $this->json([
             'company' => $company
@@ -81,34 +103,23 @@ class CompanyController extends AbstractController
 
     /**
      * @Route("/{companyId}", name="update", methods={"PUT", "PATCH"})
+     * @param Company $company
+     * @param Request $request
+     * @return JsonResponse
+     * @throws \Doctrine\ORM\ORMException
+     * @throws \Doctrine\ORM\OptimisticLockException
      */
-
-    public function update($companyId, Request $request)
+    public function update(Company $company, Request $request): JsonResponse
     {
-        
-        $data = $request->toArray();
+        $companyVo = $this->serializer->deserialize(
+            $request->getContent(),
+            CompanyValueObject::class,
+            'json'
+        );
 
-        $doctrine =$this->getDoctrine(); 
+        $company = $this->companyBuilder->assemble($company, $companyVo);
 
-        $company = $doctrine->getRepository(Company::class)->find($companyId);
-
-        $company->setName($data['name']);
-        $company->setFantasy($data['fantasy']);    
-        $company->setCnpj($data['cnpj']);
-        $company->setPort($data['port']);        
-        $company->setNature($data['nature']);
-        $company->setPhone($data['phone']);        
-        $company->setMail($data['mail']);            
-        $company->setCep($data['cep']);        
-        $company->setState($data['state']);        
-        $company->setCity($data['city']);        
-        $company->setDistrict($data['district']);        
-        $company->setStreet($data['street']);        
-        $company->setNumber($data['number']);        
-        $company->setUpdatedAt(new \DateTime('now', new \DateTimeZone('America/Sao_Paulo')));
-
-        $manager = $doctrine->getManager();
-        $manager->flush();
+        $this->companyRepository->save($company);
 
         return $this->json([
             'data' => "Company UPDATED with Success"
@@ -118,17 +129,14 @@ class CompanyController extends AbstractController
 
     /**
      * @Route("/{companyId}", name="delete", methods={"DEL", "DELETE"})
+     * @param Company $company
+     * @return JsonResponse
+     * @throws \Doctrine\ORM\ORMException
+     * @throws \Doctrine\ORM\OptimisticLockException
      */
-    public function delete($companyId)
+    public function delete(Company $company)
     {
-        
-        $doctrine =$this->getDoctrine(); 
-
-        $company = $doctrine->getRepository(Company::class)->find($companyId);
-        
-        $manager = $doctrine->getManager();
-        $manager->remove($company);
-        $manager->flush();
+        $this->companyRepository->remove($company);
 
         return $this->json([
             'data' => "Company REMOVED with Success"
